@@ -1,0 +1,12 @@
+package com.zuluflow.ledger.domain.ledger;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface AccountRepository extends JpaRepository<Account, Long> {
+    // Find a wallet by its unique number
+    Optional<Account> findByAccountNumber(String accountNumber);
+}
