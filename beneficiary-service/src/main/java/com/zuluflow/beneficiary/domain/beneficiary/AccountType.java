@@ -1,4 +1,3 @@
 package com.zuluflow.beneficiary.domain.beneficiary;
 
-public class Account {
-}
+public enum AccountType { CHEQUE, SAVINGS, TRANSMISSION }

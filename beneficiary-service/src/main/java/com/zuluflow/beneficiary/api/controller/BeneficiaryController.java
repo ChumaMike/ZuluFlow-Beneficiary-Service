@@ -1,8 +1,10 @@
 package com.zuluflow.beneficiary.api.controller;
 
+import com.zuluflow.beneficiary.api.dto.BeneficiaryRequest;
+import com.zuluflow.beneficiary.domain.beneficiary.AccountType; // Import
 import com.zuluflow.beneficiary.domain.beneficiary.Beneficiary;
+import com.zuluflow.beneficiary.domain.beneficiary.BeneficiaryStatus; // Import
 import com.zuluflow.beneficiary.domain.beneficiary.BeneficiaryService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +19,22 @@ public class BeneficiaryController {
     private final BeneficiaryService service;
 
     @PostMapping
-    public ResponseEntity<Beneficiary> createBeneficiary(@Valid @RequestBody Beneficiary beneficiary) {
+    public ResponseEntity<Beneficiary> createBeneficiary(@RequestBody BeneficiaryRequest request) {
+
+        Beneficiary beneficiary = Beneficiary.builder()
+                .name(request.name())
+                .accountNumber(request.accountNumber())
+                .bankCode(request.bankCode())
+                .clientId(request.clientId())
+                // 👇 THIS IS THE MISSING LINE 👇
+                .accountType(AccountType.valueOf(request.accountType()))
+                // 👇 THIS IS ALSO IMPORTANT 👇
+                .status(BeneficiaryStatus.ACTIVE)
+                .build();
+
         Beneficiary created = service.createBeneficiary(beneficiary);
-        return ResponseEntity.created(URI.create("/api/v1/beneficiaries/" + created.getId())).body(created);
+        return ResponseEntity.created(URI.create("/api/v1/beneficiaries/" + created.getId()))
+                .body(created);
     }
 
     @GetMapping

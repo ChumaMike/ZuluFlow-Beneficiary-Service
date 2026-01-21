@@ -54,5 +54,4 @@ public class Beneficiary {
     private LocalDateTime updatedAt;
 }
 
-enum AccountType { CHEQUE, SAVINGS, TRANSMISSION }
-enum BeneficiaryStatus { PENDING, ACTIVE, REJECTED }
+

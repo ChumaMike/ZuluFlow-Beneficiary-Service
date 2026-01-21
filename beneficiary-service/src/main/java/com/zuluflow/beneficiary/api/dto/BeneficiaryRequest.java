@@ -1,4 +1,9 @@
 package com.zuluflow.beneficiary.api.dto;
 
-public class BeneficiaryRequest {
-}
+public record BeneficiaryRequest(
+        String name,
+        String accountNumber,
+        String bankCode,
+        String clientId,
+        String accountType
+) {}

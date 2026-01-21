@@ -1,4 +1,3 @@
 package com.zuluflow.beneficiary.domain.beneficiary;
 
-public class BeneficiaryStatus {
-}
+public enum BeneficiaryStatus { PENDING, ACTIVE, REJECTED }

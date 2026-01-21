@@ -1,0 +1,18 @@
+:root { --primary: #004d40; --bg: #f4f4f9; }
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); }
+
+.dashboard { max-width: 800px; margin: 0 auto; padding: 20px; }
+header { text-align: center; color: var(--primary); margin-bottom: 30px; }
+
+.card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+
+input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+button { padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+button:disabled { background: #ccc; }
+
+.beneficiary-item { border-bottom: 1px solid #eee; padding: 15px 0; }
+.status { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+.status.PENDING { background: #fff3e0; color: #e65100; }
+.status.ACTIVE { background: #e8f5e9; color: #2e7d32; }
+.error-msg { background: #ffebee; color: #c62828; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
