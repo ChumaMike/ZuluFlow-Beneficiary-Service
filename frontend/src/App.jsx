@@ -1,66 +1,27 @@
-import { useState } from 'react'
-import axios from 'axios'
-import './App.css'
+import { useState } from 'react';
+import Sidebar from './components/layout/Sidebar';
+import DashboardHome from './modules/dashboard/DashboardHome';
 
 function App() {
-    // STATE: This is like the memory of your app
-    const [clientId, setClientId] = useState('CLIENT-BMW-001')
-    const [beneficiaries, setBeneficiaries] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
-
-    // ACTION: Search for beneficiaries
-    const searchBeneficiaries = async () => {
-        setLoading(true)
-        setError(null)
-        try {
-            // Note: We don't need http://localhost:8000 because of the Proxy!
-            const response = await axios.get(`/api/v1/beneficiaries?clientId=${clientId}`)
-            setBeneficiaries(response.data)
-        } catch (err) {
-            setError("Failed to connect to the bank. Is the Gateway running?")
-            console.error(err)
-        } finally {
-            setLoading(false)
-        }
-    }
+    const [activePage, setActivePage] = useState('dashboard');
 
     return (
-        <div className="dashboard">
-            <header>
-                <h1>🦁 ZuluFlow Bank</h1>
-            </header>
+        <div className="flex min-h-screen bg-brand-light">
+            {/* 1. Left Sidebar Navigation */}
+            <Sidebar activePage={activePage} setActivePage={setActivePage} />
 
-            <div className="card">
-                <h2>👥 Beneficiary Lookup</h2>
-                <div className="input-group">
-                    <input
-                        type="text"
-                        value={clientId}
-                        onChange={(e) => setClientId(e.target.value)}
-                        placeholder="Enter Client ID"
-                    />
-                    <button onClick={searchBeneficiaries} disabled={loading}>
-                        {loading ? 'Searching...' : 'Search'}
-                    </button>
+            {/* 2. Main Content Area */}
+            <main className="flex-1 ml-64 p-8">
+                <div className="max-w-5xl mx-auto">
+                    {/* Conditional Rendering based on menu selection */}
+                    {activePage === 'dashboard' && <DashboardHome />}
+                    {activePage === 'transact' && <div className="p-10 text-center text-gray-500">Transact Module Coming Soon... 💸</div>}
+                    {activePage === 'vas' && <div className="p-10 text-center text-gray-500">VAS Module Coming Soon... ⚡</div>}
+                    {activePage === 'profile' && <div className="p-10 text-center text-gray-500">Profile Module Coming Soon... 👤</div>}
                 </div>
-
-                {error && <div className="error-msg">{error}</div>}
-
-                <div className="results">
-                    {beneficiaries.length === 0 && !loading && <p>No beneficiaries found.</p>}
-
-                    {beneficiaries.map((b) => (
-                        <div key={b.id} className="beneficiary-item">
-                            <h3>{b.name}</h3>
-                            <p>Account: {b.accountNumber}</p>
-                            <span className={`status ${b.status}`}>{b.status}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            </main>
         </div>
-    )
+    );
 }
 
-export default App
+export default App;
