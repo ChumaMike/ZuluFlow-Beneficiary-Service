@@ -1,5 +1,6 @@
 package com.zuluflow.ledger.domain.ledger;
 
+import com.zuluflow.ledger.domain.client.BeneficiaryClient; // <--- This import should work now
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -14,21 +15,36 @@ public class LedgerService {
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final BeneficiaryClient beneficiaryClient; // <--- The Bridge
 
-    // 1. Create a Wallet (Starts with 0.00)
+    // 1. Create a Wallet
     public Account createAccount(String currency) {
         Account account = Account.builder()
-                .accountNumber(generateAccountNumber()) // Logic below
+                .accountNumber(generateAccountNumber())
                 .currency(currency)
-                .balance(BigDecimal.ZERO) // Always start empty
+                .balance(BigDecimal.ZERO)
                 .status(AccountStatus.ACTIVE)
                 .build();
         return accountRepository.save(account);
     }
 
-    // 2. The Big One: TRANSFER FUNDS (Double Entry)
-    @Transactional // <--- CRITICAL: If any line fails, EVERYTHING rolls back.
+    // 2. TRANSFER FUNDS (With Beneficiary Check)
+    @Transactional
     public Transaction transferFunds(String fromAccountNum, String toAccountNum, BigDecimal amount, String reference) {
+
+        // --- NEW: CONNECTION CHECK ---
+        System.out.println("--- CALLING BENEFICIARY SERVICE ---");
+        try {
+            // We ask: "Does CLIENT-BMW-001 have beneficiaries?"
+            // This proves the two services are talking.
+            String response = beneficiaryClient.getBeneficiaries("CLIENT-BMW-001");
+            System.out.println("Response from Beneficiary Service: " + response);
+        } catch (Exception e) {
+            System.out.println("WARNING: Could not connect to Beneficiary Service: " + e.getMessage());
+        }
+        System.out.println("--- CONNECTION CHECK COMPLETE ---");
+        // -----------------------------
+
         // A. Validation
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Transfer amount must be positive");
@@ -37,7 +53,7 @@ public class LedgerService {
             throw new IllegalArgumentException("Cannot transfer to self");
         }
 
-        // B. Load Accounts (Locking happens here via JPA Optimistic Lock)
+        // B. Load Accounts
         Account source = getAccount(fromAccountNum);
         Account target = getAccount(toAccountNum);
 
@@ -46,15 +62,15 @@ public class LedgerService {
             throw new IllegalArgumentException("Insufficient funds");
         }
 
-        // D. The Movement (Memory only)
+        // D. The Movement
         source.setBalance(source.getBalance().subtract(amount)); // DEBIT
         target.setBalance(target.getBalance().add(amount));      // CREDIT
 
-        // E. Save Accounts (Database Update)
+        // E. Save
         accountRepository.save(source);
         accountRepository.save(target);
 
-        // F. Create the Permanent Record
+        // F. Record Transaction
         Transaction record = Transaction.builder()
                 .amount(amount)
                 .debitAccountNumber(fromAccountNum)
@@ -71,7 +87,7 @@ public class LedgerService {
                 .orElseThrow(() -> new EntityNotFoundException("Account not found: " + accountNumber));
     }
 
-    // Helper: Fake IBAN generator
+    // Helper: Generator
     private String generateAccountNumber() {
         return "ACC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
