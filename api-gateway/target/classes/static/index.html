@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZuluFlow Bank</title>
+    <style>
+        :root { --primary: #004d40; --secondary: #00796b; --light: #e0f2f1; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 800px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { color: var(--primary); text-align: center; border-bottom: 2px solid var(--secondary); padding-bottom: 10px; }
+        h2 { color: var(--secondary); margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { background-color: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
+        button:hover { background-color: var(--secondary); }
+        .result-box { margin-top: 15px; padding: 10px; background: var(--light); border-radius: 6px; display: none; }
+        .error { color: red; background: #ffebee; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🦁 ZuluFlow Bank</h1>
+
+    <div class="card">
+        <h2>👥 Find Beneficiaries</h2>
+        <div class="form-group">
+            <label>Client ID</label>
+            <input type="text" id="clientIdSearch" value="CLIENT-BMW-001" placeholder="Enter Client ID">
+        </div>
+        <button onclick="searchBeneficiaries()">Search</button>
+        <div id="beneficiaryResult" class="result-box"></div>
+    </div>
+
+    <div class="card">
+        <h2>💸 Quick Transfer</h2>
+        <div class="form-group">
+            <label>From Account (Yours)</label>
+            <input type="text" id="fromAccount" placeholder="e.g. ACC-42266069">
+        </div>
+        <div class="form-group">
+            <label>To Account (Beneficiary)</label>
+            <input type="text" id="toAccount" placeholder="e.g. 1234567890">
+        </div>
+        <div class="form-group">
+            <label>Amount (ZAR)</label>
+            <input type="number" id="amount" value="100.00">
+        </div>
+        <button onclick="transferFunds()">Pay Now</button>
+        <div id="transferResult" class="result-box"></div>
+    </div>
+</div>
+
+<script>
+    // 1. SEARCH BENEFICIARIES
+    async function searchBeneficiaries() {
+        const clientId = document.getElementById('clientIdSearch').value;
+        const resultBox = document.getElementById('beneficiaryResult');
+
+        try {
+            // CALLING THE GATEWAY (Port 8000)
+            const response = await fetch(`/api/v1/beneficiaries?clientId=${clientId}`);
+            const data = await response.json();
+
+            resultBox.style.display = 'block';
+            if (response.ok) {
+                resultBox.className = 'result-box';
+                resultBox.innerHTML = `<strong>Found ${data.length} Beneficiaries:</strong><br>` +
+                    data.map(b => `• ${b.name} (${b.bankCode} - ${b.accountNumber})`).join('<br>');
+            } else {
+                throw new Error(data.error || 'Failed to fetch');
+            }
+        } catch (err) {
+            resultBox.className = 'result-box error';
+            resultBox.innerText = 'Error: ' + err.message;
+        }
+    }
+
+    // 2. TRANSFER FUNDS
+    async function transferFunds() {
+        const resultBox = document.getElementById('transferResult');
+        const payload = {
+            fromAccount: document.getElementById('fromAccount').value,
+            toAccount: document.getElementById('toAccount').value,
+            amount: parseFloat(document.getElementById('amount').value),
+            reference: "Web Payment"
+        };
+
+        try {
+            // CALLING THE GATEWAY (Port 8000)
+            const response = await fetch('/api/v1/ledger/transactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            resultBox.style.display = 'block';
+
+            if (response.ok) {
+                resultBox.className = 'result-box';
+                resultBox.style.background = '#e8f5e9';
+                resultBox.style.color = 'green';
+                resultBox.innerHTML = `✅ <strong>Success!</strong><br>Transaction ID: ${data.id}<br>Status: ${data.status}`;
+            } else {
+                throw new Error(data.message || data.error || 'Transfer Failed');
+            }
+        } catch (err) {
+            resultBox.className = 'result-box error';
+            resultBox.innerText = 'Transaction Failed: ' + err.message;
+        }
+    }
+</script>
+
+</body>
+</html>
